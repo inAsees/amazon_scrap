@@ -18,7 +18,10 @@ class Scraper:
     def __init__(self):
         self._country_codes_and_asins = self._get_country_code_and_asin()
 
-    def _get_country_code_and_asin(self) -> List[Tuple]:
+
+
+    @staticmethod
+    def _get_country_code_and_asin() -> List[Tuple]:
         res = []
         with open(r"C:\Users\DELL\Desktop\Credicxo\Amazon Scraping - Sheet1.csv", "r") as f:
             reader = csv.reader(f)
@@ -26,6 +29,3 @@ class Scraper:
             for row in reader:
                 res.append((row[3], row[2]))
         return res
-
-
-
