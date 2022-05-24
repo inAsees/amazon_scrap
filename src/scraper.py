@@ -35,7 +35,7 @@ class Scraper:
         }
 
     def url_parser(self):
-        for url in self._urls_to_scrap[113:600]:
+        for url in self._urls_to_scrap[:600]:
             response = req.get(url, headers=self._headers)
             if self._is_status_equals_404_error(response.status_code):
                 print(url, " not available")
@@ -47,8 +47,9 @@ class Scraper:
         product_title = self._get_product_title(response_soup)
         product_image_url = self._get_product_image_url(response_soup)
         product_price = self._get_product_price(url, response_soup)
+        product_detail = self._get_product_detail(response_soup)
 
-        print(url, product_title, product_image_url, product_price)
+        print(url, product_price, product_detail)
 
     def _get_product_price(self, url: str, response_soup: bs) -> Optional[str]:
         if ".de/" in url:
@@ -110,6 +111,26 @@ class Scraper:
                 return None
             lst = txt.strip().split()
             return lst[-1] + lst[-2]
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def _get_product_detail(response_soup: bs) -> Optional[Dict]:
+        dic = {}
+        try:
+            txt = response_soup.find("ul",
+                                     {
+                                         "class": "a-unordered-list a-nostyle a-vertical a-spacing-none detail-bullet-list"}).findAll(
+                "li")
+
+            for raw_txt in txt:
+                new_val = raw_txt.span.text.encode("ascii", "ignore")
+                updated_str = new_val.decode().replace("\n", "")
+                rem_newline = updated_str
+                rem_space = rem_newline.replace(" ", "")
+                y = rem_space.split(":")
+                dic[y[0]] = y[1]
+            return dic
         except AttributeError:
             return None
 
