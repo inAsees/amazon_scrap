@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import csv
 import requests as req
 from bs4 import BeautifulSoup as bs
@@ -40,7 +40,17 @@ class Scraper:
             response = req.get(url, headers=self._headers)
             if self._is_status_equals_404_error(response.status_code):
                 print(url, " not available")
-            response.soup = bs(response.text, "html.parser")
+                continue
+            response_soup = bs(response.text, "html.parser")
+            self._scrap_product_info(response_soup)
+
+    def _scrap_product_info(self, response_soup: bs) -> Dict:
+        product_title = self._get_product_title(response_soup)
+
+
+    @staticmethod
+    def _get_product_title(response_soup: bs) -> str:
+        return response_soup.find("span", {"id": "productTitle"}).text.strip()
 
     @staticmethod
     def _is_status_equals_404_error(status_code: int) -> bool:
