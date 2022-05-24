@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 import csv
 import requests as req
 from bs4 import BeautifulSoup as bs
@@ -35,17 +35,83 @@ class Scraper:
         }
 
     def url_parser(self):
-        for url in self._urls_to_scrap[:100]:
+        for url in self._urls_to_scrap[113:600]:
             response = req.get(url, headers=self._headers)
             if self._is_status_equals_404_error(response.status_code):
                 print(url, " not available")
                 continue
             response_soup = bs(response.text, "html.parser")
-            self._scrap_product_info(response_soup)
+            self._scrap_product_info(url, response_soup)
 
-    def _scrap_product_info(self, response_soup: bs) -> Dict:
+    def _scrap_product_info(self, url: str, response_soup: bs) -> Dict:
         product_title = self._get_product_title(response_soup)
         product_image_url = self._get_product_image_url(response_soup)
+        product_price = self._get_product_price(url, response_soup)
+
+        print(url, product_title, product_image_url, product_price)
+
+    def _get_product_price(self, url: str, response_soup: bs) -> Optional[str]:
+        if ".de/" in url:
+            return self._get_germany_price(response_soup)
+
+        elif ".fr/" in url:
+            return self._get_french_price(response_soup)
+
+        elif ".es/" in url:
+            return self._get_spanish_price(response_soup)
+
+        elif ".it/" in url:
+            return self._get_italian_price(response_soup)
+
+    @staticmethod
+    def _get_germany_price(response_soup: bs) -> Optional[str]:
+        try:
+            price = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
+                                                                          {"class": "a-color-base"}).text.strip()
+            if len(price) == 1:
+                return None
+            elif "from" in price:
+                new_price = price.split()
+                return new_price[1]
+            return price
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def _get_french_price(response_soup: bs) -> Optional[str]:
+        try:
+            txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
+                                                                        {"class": "a-color-base"}).text.strip()
+            if len(txt) == 1:
+                return None
+            lst = txt.strip().split()
+            return lst[-1] + lst[-2]
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def _get_spanish_price(response_soup: bs) -> Optional[str]:
+        try:
+            txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
+                                                                        {"class": "a-color-base"}).text.strip()
+            if len(txt) == 1:
+                return None
+            lst = txt.strip().split()
+            return lst[-1] + lst[-2]
+        except AttributeError:
+            return None
+
+    @staticmethod
+    def _get_italian_price(response_soup: bs) -> Optional[str]:
+        try:
+            txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
+                                                                        {"class": "a-color-base"}).text.strip()
+            if len(txt) == 1:
+                return None
+            lst = txt.strip().split()
+            return lst[-1] + lst[-2]
+        except AttributeError:
+            return None
 
     @staticmethod
     def _get_product_image_url(response_soup: bs) -> str:
@@ -65,7 +131,7 @@ class Scraper:
     @staticmethod
     def _get_country_code_and_asin() -> List[Tuple]:
         res = []
-        with open(r"C:\Users\DELL\Desktop\Credicxo\amazon_scraping_sheet1.csv", "r") as f:
+        with open(r"C:\Users\DELL\PycharmProjects\amazon_scrap\amazon_scraping_sheet1.csv", "r") as f:
             reader = csv.reader(f)
             next(reader)
             for row in reader:
