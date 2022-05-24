@@ -19,7 +19,6 @@ class Scraper:
         self._urls_to_scrap = ["https://www.amazon.{}/dp/{}".format(ccode, asin) for ccode, asin in
                                self._country_codes_and_asins]
         self._headers = {
-
             'cookie': 'session-id=258-3723382-3489961; i18n-prefs=EUR; lc-acbde=en_GB; sp-cdn="L5Z9:IN"; '
                       'ubid-acbde=259-4780058-9673219; session-token="UdJ+3NvMuV2KSFtdn+uiKR1/EPEBmI7h606fWB6fn3xUGbuq'
                       'fhkxO5KjFeD9CgFpprhbJoyTBf89mwZf8Kq6HjA1gvnLMKrxuHyLN4pXD9neWvKGc7/uULzI87zCpqT//RtnrCF00JTaAXc'
@@ -46,7 +45,14 @@ class Scraper:
 
     def _scrap_product_info(self, response_soup: bs) -> Dict:
         product_title = self._get_product_title(response_soup)
+        product_image_url = self._get_product_image_url(response_soup)
 
+    @staticmethod
+    def _get_product_image_url(response_soup: bs) -> str:
+        try:
+            return response_soup.find("div", {"id": "img-canvas"}).img.get("src")
+        except AttributeError:
+            pass
 
     @staticmethod
     def _get_product_title(response_soup: bs) -> str:
