@@ -6,32 +6,19 @@ from bs4 import BeautifulSoup as bs
 
 
 class Scraper:
-    def __init__(self):
+    def __init__(self, file_path: str, headers: Dict):
+        self._file_path = file_path
         self._country_codes_and_asins = self._get_country_code_and_asin()
         self._urls_to_scrap = ["https://www.amazon.{}/dp/{}".format(ccode, asin) for ccode, asin in
                                self._country_codes_and_asins]
-        self._headers = {
-            'cookie': 'session-id=258-3723382-3489961; i18n-prefs=EUR; lc-acbde=en_GB; sp-cdn="L5Z9:IN"; '
-                      'ubid-acbde=259-4780058-9673219; session-token="UdJ+3NvMuV2KSFtdn+uiKR1/EPEBmI7h606fWB6fn3xUGbuq'
-                      'fhkxO5KjFeD9CgFpprhbJoyTBf89mwZf8Kq6HjA1gvnLMKrxuHyLN4pXD9neWvKGc7/uULzI87zCpqT//RtnrCF00JTaAXc'
-                      'cxiksrzPXCCc02XaFNEOycrDKjDN2NR6vgePKxPMibGD+So7JjR233qRqXZCGBYsZ1Ua6BA=="; csm-hit=tb:WW50E5C0R'
-                      'WP61M11AQ8Q+s-WW50E5C0RWP61M11AQ8Q|1653399106140&t:1653399106140&adb:adblk_no;'
-                      ' session-id-time=2082754801l; i18n-prefs=EUR; session-id=257-9403444-2905827; '
-                      'session-id-time=2082787201l; session-token="jX13VNnq9rnnG/b2cTz5sHMU3pftTGxQYB5J0xfA8aqJMEc/'
-                      'Yc579O0glsPU0MDipLVJnKQS6s/I6Srs9gQAYFyGx8/5yL7GfGZGxLqFJzQoo/tL4qtYIZdvw1x/urcK9WfGKVVC8U44nnSn'
-                      '/Fh4JeKJJkj/qv84QE2DwrahkUMq6vaO81n+tEUvsoobD5/0yAJmSqdKZbyLO7/kP8KvAw=="; sp-cdn="L5Z9:IN"; '
-                      'ubid-acbde=257-5191887-3697469',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
-                          'Chrome/101.0.4951.67 Safari/537.36',
-            'viewport-width': '1229'
-        }
+        self._headers = headers
         self._products_info = []
 
     def dump_json(self) -> None:
         data = {
             "products_info": self._products_info
         }
-        with open('product_detail.json', 'w', encoding="utf-8") as f:
+        with open('../products_detail.json', 'w', encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
 
     def url_parser(self) -> None:
@@ -97,8 +84,11 @@ class Scraper:
 
     @staticmethod
     def _is_product_category_equals_perfume_cosmetic(response_soup: bs) -> bool:
-        category = response_soup.find("span", {"id": "nav-search-label-id"}).text
-        return category == "Perfume & Cosmetic"
+        try:
+            category = response_soup.find("span", {"id": "nav-search-label-id"}).text
+            return category == "Perfume & Cosmetic"
+        except AttributeError:
+            return False
 
     def _get_product_price(self, url: str, response_soup: bs) -> Optional[str]:
         if ".de/" in url:
@@ -178,10 +168,9 @@ class Scraper:
     def _is_status_equals_404_error(status_code: int) -> bool:
         return status_code == 404
 
-    @staticmethod
-    def _get_country_code_and_asin() -> List[Tuple]:
+    def _get_country_code_and_asin(self) -> List[Tuple]:
         res = []
-        with open(r"C:\Users\DELL\PycharmProjects\amazon_scrap\amazon_scraping_sheet1.csv", "r") as f:
+        with open(self._file_path, "r") as f:
             reader = csv.reader(f)
             next(reader)
             for row in reader:
