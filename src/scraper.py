@@ -45,6 +45,8 @@ class Scraper:
             self._products_info.append(self._scrap_product_info(url, response_soup))
 
     def _scrap_product_info(self, url: str, response_soup: bs) -> Dict:
+        if self._is_product_category_equals_perfume_cosmetic(response_soup):
+            prod_info = self._scrap_prod_info_for_perfume_cosmetics(url, response_soup)
         dic = {}
         product_title = self._get_product_title(response_soup)
         product_image_url = self._get_product_image_url(response_soup)
@@ -59,6 +61,29 @@ class Scraper:
         print(url)
 
         return dic
+
+    def _scrap_prod_info_for_perfume_cosmetics(self, url: str, response_soup: bs) -> Dict:
+        dic = {}
+        product_title = self._get_product_title(response_soup)
+        product_image_url = self._get_img_url_for_perfume_cosmetics(response_soup)
+        product_price = self._get_price_for_perfume_cosmetics(response_soup)
+
+        dic["title"] = product_title
+        dic["image_url"] = product_image_url
+        dic["price"] = product_price
+
+    @staticmethod
+    def _get_price_for_perfume_cosmetics(response_soup: bs) -> str:
+        return response_soup.find("span", {"class": "a-offscreen"}).text
+
+    @staticmethod
+    def _get_img_url_for_perfume_cosmetics(response_soup: bs) -> str:
+        return response_soup.find("div", {"id": "imgTagWrapperId"}).img.get("src")
+
+    @staticmethod
+    def _is_product_category_equals_perfume_cosmetic(response_soup: bs) -> bool:
+        category = response_soup.find("span", {"id": "nav-search-label-id"}).text
+        return category == "Perfume & Cosmetic"
 
     def _get_product_price(self, url: str, response_soup: bs) -> Optional[str]:
         if ".de/" in url:
@@ -127,18 +152,15 @@ class Scraper:
     def _get_product_detail(response_soup: bs) -> Optional[Dict]:
         dic = {}
         try:
-            txt = response_soup.find("ul",
-                                     {
-                                         "class": "a-unordered-list a-nostyle a-vertical a-spacing-none detail-bullet-list"}).findAll(
-                "li")
+            txt = response_soup.find("ul", {"class": "a-unordered-list a-nostyle a-vertical a-spacing-none"
+                                                     " detail-bullet-list"}).findAll("li")
 
             for raw_txt in txt:
                 new_val = raw_txt.span.text.encode("ascii", "ignore")
-                updated_str = new_val.decode().replace("\n", "")
-                rem_newline = updated_str
+                rem_newline = new_val.decode().replace("\n", "")
                 rem_space = rem_newline.replace(" ", "")
-                y = rem_space.split(":")
-                dic[y[0]] = y[1]
+                lst = rem_space.split(":")
+                dic[lst[0]] = lst[1]
             return dic
         except AttributeError:
             return None
