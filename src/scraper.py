@@ -1,3 +1,4 @@
+import json
 from typing import List, Tuple, Dict, Optional
 import csv
 import requests as req
@@ -24,23 +25,40 @@ class Scraper:
                           'Chrome/101.0.4951.67 Safari/537.36',
             'viewport-width': '1229'
         }
+        self._products_info = []
 
-    def url_parser(self):
-        for url in self._urls_to_scrap[:600]:
+    def dump_json(self) -> None:
+        data = {
+            "products_info": self._products_info
+        }
+        with open('product_detail.json', 'w', encoding="UTF-8") as f:
+            json.dump(data, f, ensure_ascii=False)
+
+    def url_parser(self) -> None:
+        for url in self._urls_to_scrap[16:19]:
             response = req.get(url, headers=self._headers)
             if self._is_status_equals_404_error(response.status_code):
                 print(url, " not available")
                 continue
             response_soup = bs(response.text, "html.parser")
-            self._scrap_product_info(url, response_soup)
+
+            self._products_info.append(self._scrap_product_info(url, response_soup))
 
     def _scrap_product_info(self, url: str, response_soup: bs) -> Dict:
+        dic = {}
         product_title = self._get_product_title(response_soup)
         product_image_url = self._get_product_image_url(response_soup)
         product_price = self._get_product_price(url, response_soup)
         product_detail = self._get_product_detail(response_soup)
 
-        print(url, product_price, product_detail)
+        dic["title"] = product_title
+        dic["image_url"] = product_image_url
+        dic["price"] = product_price
+        dic["detail"] = product_detail
+
+        print(url)
+
+        return dic
 
     def _get_product_price(self, url: str, response_soup: bs) -> Optional[str]:
         if ".de/" in url:
