@@ -31,11 +31,11 @@ class Scraper:
         data = {
             "products_info": self._products_info
         }
-        with open('product_detail.json', 'w', encoding="UTF-8") as f:
+        with open('product_detail.json', 'w', encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
 
     def url_parser(self) -> None:
-        for url in self._urls_to_scrap[16:19]:
+        for url in self._urls_to_scrap:
             response = req.get(url, headers=self._headers)
             if self._is_status_equals_404_error(response.status_code):
                 print(url, " not available")
