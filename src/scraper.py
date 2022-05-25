@@ -35,7 +35,7 @@ class Scraper:
             json.dump(data, f, ensure_ascii=False)
 
     def url_parser(self) -> None:
-        for url in self._urls_to_scrap:
+        for url in self._urls_to_scrap[:5]:
             response = req.get(url, headers=self._headers)
             if self._is_status_equals_404_error(response.status_code):
                 print(url, " not available")
@@ -46,7 +46,8 @@ class Scraper:
 
     def _scrap_product_info(self, url: str, response_soup: bs) -> Dict:
         if self._is_product_category_equals_perfume_cosmetic(response_soup):
-            prod_info = self._scrap_prod_info_for_perfume_cosmetics(url, response_soup)
+            prod_info = self._scrap_prod_info_for_perfume_cosmetics(response_soup)
+            return prod_info
         dic = {}
         product_title = self._get_product_title(response_soup)
         product_image_url = self._get_product_image_url(response_soup)
@@ -62,15 +63,29 @@ class Scraper:
 
         return dic
 
-    def _scrap_prod_info_for_perfume_cosmetics(self, url: str, response_soup: bs) -> Dict:
+    def _scrap_prod_info_for_perfume_cosmetics(self, response_soup: bs) -> Dict:
         dic = {}
         product_title = self._get_product_title(response_soup)
         product_image_url = self._get_img_url_for_perfume_cosmetics(response_soup)
         product_price = self._get_price_for_perfume_cosmetics(response_soup)
+        product_detail = self._get_details_for_perfume_cosmetics(response_soup)
 
         dic["title"] = product_title
         dic["image_url"] = product_image_url
         dic["price"] = product_price
+        dic["detail"] = product_detail
+
+        return dic
+
+    @staticmethod
+    def _get_details_for_perfume_cosmetics(response_soup: bs) -> Dict:
+        dic = {}
+        r_set = response_soup.find("table", {"class": "a-normal a-spacing-micro"}).findAll("tr")
+        for i in r_set:
+            key = i.find("td", {"class": "a-span3"}).text
+            value = i.find("td", {"class": "a-span9"}).text
+            dic[key] = value
+        return dic
 
     @staticmethod
     def _get_price_for_perfume_cosmetics(response_soup: bs) -> str:
