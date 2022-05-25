@@ -35,7 +35,7 @@ class Scraper:
             json.dump(data, f, ensure_ascii=False)
 
     def url_parser(self) -> None:
-        for url in self._urls_to_scrap[:5]:
+        for url in self._urls_to_scrap:
             response = req.get(url, headers=self._headers)
             if self._is_status_equals_404_error(response.status_code):
                 print(url, " not available")
@@ -115,77 +115,60 @@ class Scraper:
 
     @staticmethod
     def _get_germany_price(response_soup: bs) -> Optional[str]:
-        try:
-            price = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
-                                                                          {"class": "a-color-base"}).text.strip()
-            if len(price) == 1:
-                return None
-            elif "from" in price:
-                new_price = price.split()
-                return new_price[1]
-            return price
-        except AttributeError:
+        price = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
+                                                                      {"class": "a-color-base"}).text.strip()
+        if len(price) == 1:
             return None
+        elif "from" in price:
+            new_price = price.split()
+            return new_price[1]
+        return price
 
     @staticmethod
     def _get_french_price(response_soup: bs) -> Optional[str]:
-        try:
-            txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
-                                                                        {"class": "a-color-base"}).text.strip()
-            if len(txt) == 1:
-                return None
-            lst = txt.strip().split()
-            return lst[-1] + lst[-2]
-        except AttributeError:
+        txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
+                                                                    {"class": "a-color-base"}).text.strip()
+        if len(txt) == 1:
             return None
+        lst = txt.strip().split()
+        return lst[-1] + lst[-2]
 
     @staticmethod
     def _get_spanish_price(response_soup: bs) -> Optional[str]:
-        try:
-            txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
-                                                                        {"class": "a-color-base"}).text.strip()
-            if len(txt) == 1:
-                return None
-            lst = txt.strip().split()
-            return lst[-1] + lst[-2]
-        except AttributeError:
+        txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
+                                                                    {"class": "a-color-base"}).text.strip()
+        if len(txt) == 1:
             return None
+        lst = txt.strip().split()
+        return lst[-1] + lst[-2]
 
     @staticmethod
     def _get_italian_price(response_soup: bs) -> Optional[str]:
-        try:
-            txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
-                                                                        {"class": "a-color-base"}).text.strip()
-            if len(txt) == 1:
-                return None
-            lst = txt.strip().split()
-            return lst[-1] + lst[-2]
-        except AttributeError:
+        txt = response_soup.find("div", {"id": "tmmSwatches"}).find("span",
+                                                                    {"class": "a-color-base"}).text.strip()
+        if len(txt) == 1:
             return None
+        lst = txt.strip().split()
+        return lst[-1] + lst[-2]
 
     @staticmethod
     def _get_product_detail(response_soup: bs) -> Optional[Dict]:
         dic = {}
-        try:
-            txt = response_soup.find("ul", {"class": "a-unordered-list a-nostyle a-vertical a-spacing-none"
-                                                     " detail-bullet-list"}).findAll("li")
+        txt = response_soup.find("ul", {"class": "a-unordered-list a-nostyle a-vertical a-spacing-none"
+                                                 " detail-bullet-list"}).findAll("li")
 
-            for raw_txt in txt:
-                new_val = raw_txt.span.text.encode("ascii", "ignore")
-                rem_newline = new_val.decode().replace("\n", "")
-                rem_space = rem_newline.replace(" ", "")
-                lst = rem_space.split(":")
-                dic[lst[0]] = lst[1]
-            return dic
-        except AttributeError:
-            return None
+        for raw_txt in txt:
+            new_val = raw_txt.span.text.encode("ascii", "ignore")
+            rem_newline = new_val.decode().replace("\n", "")
+            rem_space = rem_newline.replace(" ", "")
+            lst = rem_space.split(":")
+            dic[lst[0]] = lst[1]
+
+        return dic
 
     @staticmethod
     def _get_product_image_url(response_soup: bs) -> str:
-        try:
-            return response_soup.find("div", {"id": "img-canvas"}).img.get("src")
-        except AttributeError:
-            pass
+        return response_soup.find("div", {"id": "img-canvas"}).img.get("src")
 
     @staticmethod
     def _get_product_title(response_soup: bs) -> str:
